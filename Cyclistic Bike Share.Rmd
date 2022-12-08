@@ -1,0 +1,347 @@
+---
+title: "Cyclistic Bike-Share"
+author: "Uko Etukho"
+date: "1/8/2022"
+output: html_document
+---
+
+
+
+
+#### INTRODUCTION
+Cyclistic Bike-Share case study is a study on the Bike-Share users for a period of 12 months to gain insights into user trends. It is a Google Data Analytics Certificate Capstone project to demonstrate data analytics.
+
+#### BUSINESS TASK
+The goal of this case study is to gain insights into different types of user trends and how these trends could help in developing a marketing strategy to persuade casual users to buy into the membership program of the company.
+
+#### DATA SOURCE
+The data used in this study is provided for public use by Motivate International Inc. under this [license](https://ride.divvybikes.com/data-license-agreement).
+
+#### DATA CLEANING AND TRANSFORMATION
+Analysis and visualizations will be done in the R Studio and Tableau.
+
+##### R STUDIO
+Preparing the work environment.
+```{r message=FALSE}
+library(tidyverse)
+library(here)
+library(skimr)
+library(janitor)
+library(lubridate)
+
+```
+After preparing the working environment by loading the relevant packages into R Studio, I now loaded the required data sets into the environment.
+
+```{r message=FALSE, results='hide'}
+divvy_04 <- read_csv("C:/Users/Dell 5580/Documents/Google Data Analytics/divvy_trips/202004-divvy-tripdata.csv")
+glimpse(divvy_04)
+
+```
+
+```{r message=FALSE, results='hide'}
+divvy_05 <- read_csv("C:/Users/Dell 5580/Documents/Google Data Analytics/divvy_trips/202005-divvy-tripdata.csv")
+spec(divvy_05)
+glimpse(divvy_05)
+```
+
+```{r message=FALSE, results='hide'}
+divvy_06 <- read_csv("C:/Users/Dell 5580/Documents/Google Data Analytics/divvy_trips/202006-divvy-tripdata.csv")
+glimpse(divvy_06)
+
+```
+
+```{r message=FALSE, results='hide'}
+divvy_07 <- read_csv("C:/Users/Dell 5580/Documents/Google Data Analytics/divvy_trips/202007-divvy-tripdata.csv")
+glimpse(divvy_07)
+
+```
+
+```{r message=FALSE, results='hide'}
+divvy_08 <- read_csv("C:/Users/Dell 5580/Documents/Google Data Analytics/divvy_trips/202008-divvy-tripdata.csv")
+glimpse(divvy_08)
+
+```
+
+```{r message=FALSE, results='hide'}
+divvy_09 <- read_csv("C:/Users/Dell 5580/Documents/Google Data Analytics/divvy_trips/202009-divvy-tripdata.csv")
+glimpse(divvy_09)
+
+```
+
+```{r message=FALSE, results='hide'}
+divvy_10 <- read_csv("C:/Users/Dell 5580/Documents/Google Data Analytics/divvy_trips/202010-divvy-tripdata.csv")
+glimpse(divvy_10)
+
+```
+
+```{r message=FALSE, results='hide'}
+divvy_11 <- read_csv("C:/Users/Dell 5580/Documents/Google Data Analytics/divvy_trips/202011-divvy-tripdata.csv")
+glimpse(divvy_11)
+
+```
+
+```{r message=FALSE, results='hide'}
+divvy_12 <- read_csv("C:/Users/Dell 5580/Documents/Google Data Analytics/divvy_trips/202012-divvy-tripdata.csv")
+glimpse(divvy_12)
+
+```
+
+```{r message=FALSE, results='hide'}
+divvy_q1 <- read_csv("C:/Users/Dell 5580/Documents/Google Data Analytics/divvy_trips/Divvy_Trips_2020_Q1.csv")
+glimpse(divvy_q1)
+
+```
+
+Checking the data frames structure for incongruencies.
+```{r results='hide'}
+str(divvy_04)
+str(divvy_05)
+str(divvy_06)
+str(divvy_07)
+str(divvy_08)
+str(divvy_09)
+str(divvy_10)
+str(divvy_11)
+str(divvy_12)
+str(divvy_q1)
+
+```
+
+After noticing structure incongruencies in divvy_04 and divvy_12 data frames, I changed the 'started_at' and 'ended_at' column types in divvy_04 from character to date-time types and also changed the 'start_station_id' and 'end_station_id' columns types in divvy_12 from character to number types.
+
+```{r, results='hide'}
+divvy_04$started_at <-  mdy_hm(divvy_04$started_at)
+divvy_04$ended_at <-  mdy_hm(divvy_04$ended_at)
+str(divvy_04)
+
+```
+
+
+```{r, warning=FALSE, results='hide'}
+divvy_12$start_station_id <- as.numeric(as.character(divvy_12$start_station_id))
+divvy_12$end_station_id <- as.numeric(as.character(divvy_12$end_station_id))
+str(divvy_12)
+```
+
+
+
+Stacking all the monthly data frames and the quarterly data frame (divvy_q1) into one large data frame.
+
+```{r}
+all_rides <- bind_rows(divvy_q1, divvy_04, divvy_05, divvy_06, divvy_07, divvy_08,
+                  divvy_09, divvy_10, divvy_11, divvy_12)
+
+```
+
+```{r, results='hide'}
+glimpse(all_rides)
+colnames(all_rides)
+nrow(all_rides)
+head(all_rides)
+tail(all_rides)
+
+```
+
+Next is to sort the data frame by the earliest started day 
+
+```{r}
+all_rides <- arrange(all_rides, started_at)
+head(all_rides)
+tail(all_rides)
+
+```
+
+```{r, results='hide'}
+dim(all_rides)
+str(all_rides)
+summary(all_rides)
+
+```
+
+Checking the user type consistency
+
+```{r}
+table(all_rides$member_casual)
+
+```
+
+Creating new columns for date, year, month, day and day_of_week 
+
+```{r}
+all_rides$date <- as.Date(all_rides$started_at)
+
+```
+
+```{r, results='hide'}
+all_rides$month <- format(as.Date(all_rides$date), "%m")
+all_rides$day <- format(as.Date(all_rides$date), "%d")
+all_rides$year <- format(as.Date(all_rides$date), "%Y")
+all_rides$day_of_week <- format(as.Date(all_rides$date), "%A")
+head(all_rides)
+
+```
+
+Create a new column to get the duration of rides
+
+```{r, results='hide'}
+all_rides$ride_duration <- difftime(all_rides$ended_at,all_rides$started_at)
+str(all_rides)
+summary(all_rides)
+
+```
+
+Now convert the ride_duration column to numeric type
+
+```{r}
+all_rides$ride_duration <- as.numeric(as.character(all_rides$ride_duration))
+
+```
+
+```{r}
+is.numeric(all_rides$ride_duration)
+
+```
+
+Remove any negative ride length in the ride_duration column
+
+```{r}
+all_rides_v2 <- all_rides[!(all_rides$ride_duration<0),]
+summary(all_rides_v2)
+summary(all_rides_v2$ride_duration)
+
+```
+
+#### DATA ANALYSIS
+Compare members and casual users statistics:  
+Mean
+
+```{r}
+aggregate(all_rides_v2$ride_duration ~ all_rides_v2$member_casual, FUN = mean)
+
+```
+Median
+```{r}
+aggregate(all_rides_v2$ride_duration ~ all_rides_v2$member_casual, FUN = median)
+
+```
+Maximum
+```{r}
+aggregate(all_rides_v2$ride_duration ~ all_rides_v2$member_casual, FUN = max)
+
+```
+Minimum
+```{r}
+aggregate(all_rides_v2$ride_duration ~ all_rides_v2$member_casual, FUN = min)
+
+```
+Total Durations
+```{r}
+aggregate(all_rides_v2$ride_duration ~ all_rides_v2$member_casual, FUN = sum)
+
+```
+
+
+
+See average ride time for each day by members and casual users
+
+```{r results='hide'}
+aggregate(all_rides_v2$ride_duration ~ all_rides_v2$member_casual + all_rides_v2$day_of_week,
+          FUN = mean)
+
+```
+Noticing that the days of the week are out of order.
+
+```{r}
+all_rides_v2$day_of_week <- 
+  ordered(all_rides_v2$day_of_week, levels=c("Sunday", "Monday",  "Tuesday", 
+                                             "Wednesday", "Thursday", "Friday", "Saturday"))
+
+```
+
+```{r}
+aggregate(all_rides_v2$ride_duration ~ all_rides_v2$member_casual + all_rides_v2$day_of_week,
+          FUN = mean)
+
+```
+
+Analyze ridership data by type and weekday
+
+```{r}
+all_rides_v2 %>%
+  mutate(weekday = wday(started_at, label = TRUE)) %>%    #creates weekday field using wday()
+group_by(member_casual, weekday) %>%                      #groups by usertype and weekday
+  summarise(number_of_rides = n(),        #calculates the number of rides and average duration
+            average_duration = mean(ride_duration)) %>%     #calculates the average duration
+  arrange(member_casual, weekday)                         #sorts
+
+```
+
+Visualizing the number of rides by rider type
+
+```{r}
+all_rides_v2 %>%
+  mutate(weekday = wday(started_at, label = TRUE)) %>%
+  group_by(member_casual, weekday) %>%
+  summarise(number_of_rides = n()
+,average_duration = mean(ride_duration)) %>%
+  arrange(member_casual, weekday) %>%
+  ggplot(aes(x = weekday, y = number_of_rides, fill = member_casual)) +
+  geom_col(position = "dodge") +
+  labs(title = "Number of rides per Weekday"
+      )
+
+```
+
+
+
+Visualizing the average duration each weekday
+
+```{r}
+all_rides_v2 %>%
+  mutate(weekday = wday(started_at, label = TRUE)) %>%
+  group_by(member_casual, weekday) %>%
+  summarise(number_of_rides = n()
+            ,average_duration = mean(ride_duration)) %>%
+  arrange(member_casual, weekday) %>%
+  ggplot(aes(x = weekday, y = average_duration, fill = member_casual)) +
+  geom_col(position = "dodge") +
+  labs(title = "Average duration per Weekday"
+      )
+
+```
+
+
+##### OBSERVATIONS
+  
+  * Annual members have the highest number of rides with a total value of 2,175,108.  
+  * Casual users have the highest ride duration time with a total of  3,878,904,912 seconds.  
+  * Annual members have the highest total number of daily rides with the exception of Saturday.  
+  * Casual users have much more daily ride duration as compared to members.
+
+
+I now saved the cleaned dataset file to local storage for further analysis and visualizations on Tableau.
+
+
+
+##### TABLEAU  
+Tableau Dashboard
+
+#to embed tableau dashboard
+#iframe("100%", 600, "https://public.tableau.com/views/CyclisticBike-Share2020/Dashboard1?:
+#language=en-US&:display_count=n&:origin=viz_share_link:showVizHome=no&:embed=true")
+
+[View on Tableau](https://public.tableau.com/app/profile/uko.etukho/viz/CyclisticBike-Share2020/Dashboard1)
+
+##### OBSERVATIONS
+  * Ride duration peak months range is from May to October with the highest month being July for both members and casual users.
+  * Docked type of bike is most preferred type of bike used.
+  * Casual users have the longest daily ride duration with peak days on Saturday and Sunday.
+  * Members have the highest number of rides while Casual users have the highest duration of ride.
+  
+#### SUMMARY
+Since peak usage period is between May and October as seen on the dashboard with a lot of activities by the casual users, a promotion package should be designed for intending members during this period to achieve maximum effect.  
+
+Similarly, a package should be designed for intending members during the weekends to encourage casual users to migrate to membership as it is seen that most casual users ride more on weekends.  
+
+Promotions should also be intensified within weekends and during peak months.
+  

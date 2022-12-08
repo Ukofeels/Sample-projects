@@ -1,0 +1,222 @@
+---
+title: "Bellabeat Case Study"
+author: "Uko Etukho"
+date: "12/22/2021"
+output: html_document
+---
+
+
+
+### INTRODUCTION
+This is a case study that looks into trends in the usage of smart trackers to gain insights for an improved marketing strategy for Bellabeat - a high-tech company that manufactures health-focused smart products for women. These smart trackers collect data on activity, sleep, stress, and reproductive health of the wearer.
+
+This case study will focus on one of Bellabeat's product, LEAF. Leaf comes in a variety of presentations including necklace and bracelet.
+
+### BUSINESS TASK
+The goal of this case study is to gain insights into trends in the usage of smart tracker devices, identify how it can be related to Bellabeat tracker users and how these trends could help influence Bellabeat's marketing strategy.
+
+### DATA SOURCE
+The dataset used in this case study is provided by Mobius on Kaggle. The dataset is a crowd-sourced fitbit dataset collected by Furberg, Robert; Brinton, Julia; Keating, Michael and Ortiz, Alexa in 2016 and licenced under CCO:Public dormain.
+
+### ANALYSIS
+I decided to use R Studio and Tableau for the analysis after first opening the dataset in microsoft excel and realizing that some data frames were too large and cannot completely load in excel.
+
+#### R Studio:
+Loading relevant packages.
+```{r message=FALSE}
+library(tidyverse)
+library(here)
+library(skimr)
+library(janitor)
+library(lubridate)
+
+```
+
+After loading the relevant packages into R Studio, I now loaded the required data frames into the R Studio environment.
+```{r message=FALSE}
+daily_activity <- read_csv("Fitabase Data 4.12.16-5.12.16/dailyActivity_merged.csv")
+glimpse(daily_activity)
+```
+
+```{r message=FALSE}
+hourly_calories <- read_csv("Fitabase Data 4.12.16-5.12.16/hourlyCalories_merged.csv")
+head(hourly_calories)
+```
+
+
+```{r message=FALSE}
+hourly_intensities <- read_csv("Fitabase Data 4.12.16-5.12.16/hourlyIntensities_merged.csv")
+head(hourly_intensities)
+```
+
+```{r message=FALSE}
+hourly_steps <- read_csv("Fitabase Data 4.12.16-5.12.16/hourlySteps_merged.csv")
+head(hourly_steps)
+```
+
+#### Data Cleaning and Manipulation
+
+I needed to create a new column - week_days, in the daily_activity data frame so I start with creating a new vector by formating the 'ActivityDate' column to date format.
+```{r}
+formated_date <- as.Date(daily_activity$ActivityDate, format = "%m/%d/%Y")  
+
+```
+
+I then add the formated as.date column to the daily_activity data table as 'week_days' and renamed the data frame to 'activity_df'.
+```{r #mutate to add week_days}
+activity_df <- daily_activity %>% 
+  mutate(week_days = weekdays(as.Date(formated_date)))
+glimpse(activity_df)
+```
+
+In order to clean the data, 
+* I cleaned the column names, 
+* removed duplicate entries and 
+* deleted incomplete row entries.
+
+```{r cleaning}
+activity_df <- activity_df %>% 
+  clean_names() %>% 
+  distinct()
+head(activity_df)
+```
+
+```{r}
+calories_df <- hourly_calories %>% 
+  clean_names() %>% 
+  distinct()
+head(calories_df)
+```
+
+```{r}
+intensities_df <- hourly_intensities %>% 
+  clean_names() %>% 
+  distinct()
+head(intensities_df)
+```
+
+```{r}
+steps_df <- hourly_steps %>% 
+  clean_names() %>% 
+  distinct()
+head(steps_df)
+```
+
+I now saved the following cleaned versions of the files for download and further upload to Tableau for analysis and visualization.
+
+```{r saving calories_df}
+write.csv(calories_df, "Fitabase Data 4.12.16-5.12.16/hourly_calories_cleaned.csv",
+          row.names = FALSE)
+
+```
+
+
+```{r saving cleaned intensities_df}
+write.csv(intensities_df, "Fitabase Data 4.12.16-5.12.16/hourly_intensities_cleaned.csv",
+          row.names = FALSE)
+
+```
+
+
+```{r saving cleaned steps_df}
+write.csv(steps_df, "Fitabase Data 4.12.16-5.12.16/hourly_steps_cleaned.csv",
+          row.names = FALSE)
+
+```
+
+#### Tableau:
+
+![Tableau Visualization](Fitabase Data 4.12.16-5.12.16/98tableau_vis.PNG)
+[View on Tableau](https://public.tableau.com/app/profile/uko.etukho/viz/FitbitUsers/Dashboard1)
+
+#### Observations:
+The Tableau visualization was created by merging three data tables - hourly_calories_cleaned, hourly_intensities_cleaned and hourly_steps_cleaned with the columns' 'id' and 'activity_hour' as the connecting keys.  
+
+* It is observed that all three variables are related to each other as increase in one variable corresponds to an increase in others. ie, as the number of steps increase, the intensity increases also and so with the calories burnt.  
+* The relationship between steps, intensity and calories burnt can be said to be causative because increase in number of step leads to increase in intensity and increase in intensity leads to increase in the amount of calories burnt.  
+* It can therefore be said that all three variables have a positive correlation with each other.
+
+
+#### R Studio:
+
+```{r plot of steps vs distance}
+ggplot(data = activity_df)+
+  geom_jitter(mapping = aes(x=total_steps, y=total_distance, color=id))+
+  labs(
+    title = "Correlation: Total Steps vs Total Distance",
+    subtitle = "Correlation between Fitbit Tracker users steps and distance",
+    caption = "Source: https://zenodo.org/record/53894#.X9oeh3Uzaao",
+    x = "total steps",
+    y = "total distance(miles)"
+  )
+
+```
+
+
+```{r plot of steps vs calories}
+ggplot(data = activity_df)+
+  geom_point(mapping = aes(x=total_steps, y=calories, color=id))+
+  geom_smooth(mapping = aes(x=total_steps, y=calories))+
+  labs(
+    title = "Correlation: Total Steps vs Calories",
+    subtitle = "Correlation between Fitbit Tracker users steps and calories burnt",
+    caption = "Source: https://zenodo.org/record/53894#.X9oeh3Uzaao",
+    x = "Total Steps",
+    y = "Calories Burnt"
+  )
+
+```
+
+#### Observations:
+* As observed earlier from Tableau, the relationship between total steps and calories burnt is causative as increase in total steps taken leads to an increase in the calories burnt.  
+* The relationship between the total steps and total distance is also seen to be causative as an increase in the number of steps will definitely lead to an increase in distance.  
+* The measure of the quantity of calories burnt is an important metrics in the data tracker trends and should be included as one of Bellabeat's LEAF measured metrics.
+
+```{r plot of weekday and total steps}
+ggplot(data = activity_df)+
+  geom_point(mapping = aes(x = week_days, y = total_steps, color = calories))+
+  theme(axis.text.x = element_text(angle = 45))+
+  labs(title = "Total Steps Per Weekday", 
+       subtitle = "Number of Fitbit Tracker users steps per weekday",
+       caption = "data source: https://zenodo.org/record/53894#.X9oeh3Uzaao")
+
+```
+
+```{r plot of weekdays and tracker distance}
+ggplot(data = activity_df)+
+  geom_point(mapping = aes(x = week_days, y = tracker_distance, color = calories))+
+  theme(axis.text.x = element_text(angle = 45))+
+  labs(title = "Tracker Distance Per Weekday", 
+       subtitle = "Total distance covered by Fitbit Tracker users per weekday",
+       caption = "data source: https://zenodo.org/record/53894#.X9oeh3Uzaao")
+
+```
+
+```{r plot of weekdays and sedentary distance}
+ggplot(data = activity_df)+
+  geom_point(mapping = aes(x = week_days, y = sedentary_active_distance))+
+  geom_polygon(mapping = aes(x = week_days, y = sedentary_active_distance, color = calories))+
+  theme(axis.text.x = element_text(angle = 45))+
+  labs(title = "Sedentary Distance per Weeekday", 
+       subtitle = "Fitbit Tracker users sedentary active distance per weekday",
+       caption = "data source: https://zenodo.org/record/53894#.X9oeh3Uzaao")
+
+```
+
+#### Observations:  
+* The plot of total_steps against week_days and tracker_distance against week_days shows that most steps taken and distance covered are on Saturdays and Sundays.  
+* The change in color from a darker shade to a lighter shade (calories) confirms our earlier observation that an increase in the number of steps directly leads to an increase in the amount of calories burnt.  
+* The plot of sedentary_active_distance against week_days shows that the most sedentary days are Monday and Thursday and the least are Saturdays and Sundays.  
+* The implications are that people actively move about on Saturdays and Sundays and are relatively still on Mondays and Thurdays. 
+
+### Summary
+In summary,  
+* It can be observed that the number of total steps taken, the intensity resulting and the amount of calories burnt have a positive correlation.  
+* It can also be observed that most steps are taken on Saturdays and Sundays.  
+* Most distance are covered on Saturdays and Sundays.  
+* The most sedentary days are Mondays and Thursdays.  
+
+### Marketing Strategy Recommendations:  
+* Bellabeats should include the measurement of Calories Burnt as one of the measured matrics of LEAF as this will encourage more users to identify with the brand. This is true because lots of people will see targeted amount of calories burnt as a goal to chase.  
+* Bellabeats should appropriate more outdoor advertising quota for Saturdays and Sundays since people move around mostly on those days.  
+* Bellabeat should appropriate more TV and Radio advertising quota for Mondays and Thursdays since most people are less likely to move around on those days.
